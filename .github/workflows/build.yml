@@ -2,17 +2,15 @@ name: Build
 
 on:
   push:
-#    branches:
-#      - main
-#      - develop
-#    tags:
-#      - 'v*.*.*'
-#  pull_request:
-#    branches:
-#      - main
-#      - develop
-#  schedule:
-#    - cron: '0 1 * * *'
+    branches:
+      - main
+      - develop
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    branches:
+      - main
+      - develop
 
 jobs:
   push-image:
