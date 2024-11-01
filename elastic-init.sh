@@ -1,6 +1,6 @@
 #!/bin/sh
 
-HOST="${ES_HOST:-http://localhost}:${ES_PORT:-9200}"
+HOST="${ES_HOST:-http://127.0.0.1}:${ES_PORT:-9200}"
 REPO="${ONTO_REPO:-https://github.com/medizininformatik-initiative/fhir-ontology-generator/raw/}"
 RELATIVE_PATH="${ONTO_RELATIVE_PATH:-/example/fdpg-ontology/}"
 FILENAME="${DOWNLOAD_FILENAME:-elastic.zip}"
