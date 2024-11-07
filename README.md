@@ -37,7 +37,6 @@ To use this Docker image, follow these steps:
               -e ONTO_RELATIVE_PATH=<onto_relative_path> \
               -e DOWNLOAD_FILENAME=<download_filename> \
               -e EXIT_ON_EXISTING_INDICES=false \
-              -e FORCE_INDEX_CREATION=false \
               dataportal-es-init
    ```
 
@@ -52,7 +51,6 @@ The Docker image supports several environment variables for configuration. The o
 - `ONTO_RELATIVE_PATH`: The path to the elastic search files inside the repository (default: `/example/fdpg-ontology/`) 
 - `DOWNLOAD_FILENAME`: The filename to get (default: `elastic.zip`)
 - `EXIT_ON_EXISTING_INDEX`: If set to true, the container will shut down without doing anything if at least one of both indices (`ontology` and `codeable_concept`) exists (default: true)
-- `FORCE_INDEX_CREATION`: If set to true, both indices are deleted in the beginning (if they exist). Will be ignored if `EXIT_ON_EXISTING_INDICES` is set to true and at least one of the indices is existing (default: false)
 
 ## Examples
 
@@ -75,6 +73,5 @@ docker run --network host \
            -e ONTO_RELATIVE_PATH=/example/fdpg-ontology/ \
            -e DOWNLOAD_FILENAME=elastic.zip \
            -e EXIT_ON_EXISTING_INDICES=false \
-           -e FORCE_INDEX_CREATION=false \
            dataportal-es-init
 ```

@@ -34,11 +34,9 @@ fi
 
 unzip -o "$FILENAME"
 
-if [ "$FORCE_INDEX_CREATION" = true ]; then
-  echo "(Trying to) delete existing indices"
-  curl --request DELETE "$HOST/ontology"
-  curl --request DELETE "$HOST/codeable_concept"
-fi
+echo "(Trying to) delete existing indices"
+curl --request DELETE "$HOST/ontology"
+curl --request DELETE "$HOST/codeable_concept"
 
 echo "Creating ontology index..."
 response_onto=$(curl --write-out "%{http_code}" -s --output /dev/null -XPUT -H 'Content-Type: application/json' "$HOST/ontology" -d @elastic/ontology_index.json)
@@ -52,22 +50,14 @@ for FILE in elastic/*; do
   if [ -f "$FILE" ]; then
     BASENAME=$(basename "$FILE")
     if [[ $BASENAME == onto_es__ontology* && $BASENAME == *.json ]]; then
-      if [[ "$response_onto" -eq 200 || "$FORCE_INDEX_CREATION" = "true" ]]; then
-        echo "Uploading $BASENAME"
-        response_upload=$(curl --write-out "%{http_code}" -s --output /dev/null -XPOST -H 'Content-Type: application/json' --data-binary @"$FILE" "$HOST/ontology/_bulk")
-        echo "${response_upload}"
-      else
-        echo "Skipping $BASENAME because index was already existing. Set FORCE_INDEX_CREATION to true to force creating a new index"
-      fi
+      echo "Uploading $BASENAME"
+      response_upload=$(curl --write-out "%{http_code}" -s --output /dev/null -XPOST -H 'Content-Type: application/json' --data-binary @"$FILE" "$HOST/ontology/_bulk")
+      echo "${response_upload}"
     fi
     if [[ $BASENAME == onto_es__codeable_concept* && $BASENAME == *.json ]]; then
-      if [[ "$response_cc" -eq 200 || "$FORCE_INDEX_CREATION" = "true" ]]; then
-        echo "Uploading $BASENAME"
-        response_upload=$(curl --write-out "%{http_code}" -s --output /dev/null -XPOST -H 'Content-Type: application/json' --data-binary @"$FILE" "$HOST/codeable_concept/_bulk")
-        echo "${response_upload}"
-      else
-        echo "Skipping $BASENAME because index was already existing. Set FORCE_INDEX_CREATION to true to force creating a new index"
-      fi
+      echo "Uploading $BASENAME"
+      response_upload=$(curl --write-out "%{http_code}" -s --output /dev/null -XPOST -H 'Content-Type: application/json' --data-binary @"$FILE" "$HOST/codeable_concept/_bulk")
+      echo "${response_upload}"
     fi
   fi
 done
