@@ -1,6 +1,7 @@
 services:
   init-elasticsearch:
-    image: dataportal-es-init:1.0.0
+    image: ghcr.io/medizininformatik-initiative/dataportal-es-init:latest
+    # Please see the README.md description of the ES_HOST parameter concerning the network_mode
     network_mode: host
     environment:
       ES_HOST: ${ELASTIC_INIT_ES_HOST}
@@ -10,4 +11,3 @@ services:
       ONTO_RELATIVE_PATH: ${ELASTIC_INIT_ONTO_RELATIVE_PATH}
       DOWNLOAD_FILENAME: ${ELASTIC_INIT_DOWNLOAD_FILENAME}
       EXIT_ON_EXISTING_INDICES: ${ELASTIC_INIT_EXIT_ON_EXISTING_INDICES}
-      FORCE_INDEX_CREATION: ${ELASTIC_INIT_FORCE_INDEX_CREATION}
