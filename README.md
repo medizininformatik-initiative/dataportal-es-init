@@ -50,7 +50,7 @@ The Docker image supports several environment variables for configuration. The o
 - `ONTO_REPO`: Base URL to the ontology generator repository (default: `https://github.com/medizininformatik-initiative/fhir-ontology-generator/raw/`).
 - `ONTO_RELATIVE_PATH`: The path to the elastic search files inside the repository (default: `/example/fdpg-ontology/`) 
 - `DOWNLOAD_FILENAME`: The filename to get (default: `elastic.zip`)
-- `EXIT_ON_EXISTING_INDEX`: If set to true, the container will shut down without doing anything if at least one of both indices (`ontology` and `codeable_concept`) exists (default: true)
+- `EXIT_ON_EXISTING_INDEX`: If set to true, the container will shut down without doing anything if at least one of both indices (`ontology` and `codeable_concept`) exists (default: false)
 
 ## Examples
 
