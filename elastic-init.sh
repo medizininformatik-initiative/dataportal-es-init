@@ -1,8 +1,7 @@
 #!/bin/sh
 
 HOST="${ES_HOST:-http://127.0.0.1}:${ES_PORT:-9200}"
-REPO="${ONTO_REPO:-https://github.com/medizininformatik-initiative/fhir-ontology-generator/raw/}"
-RELATIVE_PATH="${ONTO_RELATIVE_PATH:-/example/fdpg-ontology/}"
+REPO="${ONTO_REPO:-https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/download}"
 FILENAME="${DOWNLOAD_FILENAME:-elastic.zip}"
 
 # Wait for Elasticsearch to start up before doing anything
@@ -23,7 +22,7 @@ if [ "$EXIT_ON_EXISTING_INDICES" = "true" ]; then
   fi
 fi
 
-ABSOLUTE_FILEPATH="${REPO}${ONTO_GIT_TAG}${RELATIVE_PATH}${FILENAME}"
+ABSOLUTE_FILEPATH="${REPO}/${ONTO_GIT_TAG}/${FILENAME}"
 echo "Downloading $ABSOLUTE_FILEPATH"
 response_onto_dl=$(curl --write-out "%{http_code}" -sLO "$ABSOLUTE_FILEPATH")
 
