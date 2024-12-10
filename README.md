@@ -47,10 +47,9 @@ The Docker image supports several environment variables for configuration. The o
 - `ES_HOST`: The hostname or IP address of the Elasticsearch instance (default: `127.0.0.1`). Please note that the host must - for obvious reasons - be reachable from within this container. In case you are just using it for local purposes, set `--network host` in your docker run command or compose file and use 127.0.0.1 . In that case, the elasticsearch port 9200 must be mapped to the host machine as well.
 - `ES_PORT`: The port Elasticsearch is running on (default: `9200`).
 - `ONTO_GIT_TAG`: The tag of the [FHIR Ontology Generator](https://github.com/medizininformatik-initiative/fhir-ontology-generator) files to use.
-- `ONTO_REPO`: Base URL to the ontology generator repository (default: `https://github.com/medizininformatik-initiative/fhir-ontology-generator/raw/`).
-- `ONTO_RELATIVE_PATH`: The path to the elastic search files inside the repository (default: `/example/fdpg-ontology/`) 
+- `ONTO_REPO`: Base URL to the ontology generator repository (default: `https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/download`). Please do **NOT** enter a trailing slash since it will be inserted in the script.
 - `DOWNLOAD_FILENAME`: The filename to get (default: `elastic.zip`)
-- `EXIT_ON_EXISTING_INDEX`: If set to true, the container will shut down without doing anything if at least one of both indices (`ontology` and `codeable_concept`) exists (default: true)
+- `EXIT_ON_EXISTING_INDEX`: If set to true, the container will shut down without doing anything if at least one of both indices (`ontology` and `codeable_concept`) exists (default: false)
 
 ## Examples
 
@@ -58,7 +57,7 @@ A minimal example to run would be the following. Please see the description of t
 
 ```bash
 docker run --network host \
-           -e ONTO_GIT_TAG=v3.0.0-alpha \
+           -e ONTO_GIT_TAG=v3.0.1 \
            ghcr.io/medizininformatik-initiative/dataportal-es-init:feature-1-create-es-init-container
 ```
 
@@ -68,9 +67,8 @@ which would be equivalent to
 docker run --network host \
            -e ES_HOST=http://127.0.0.1 \
            -e ES_PORT=9200 \
-           -e ONTO_GIT_TAG=v3.0.0-alpha \
-           -e ONTO_REPO=https://github.com/medizininformatik-initiative/fhir-ontology-generator/raw/ \
-           -e ONTO_RELATIVE_PATH=/example/fdpg-ontology/ \
+           -e ONTO_GIT_TAG=v3.0.1 \
+           -e ONTO_REPO=https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/download \
            -e DOWNLOAD_FILENAME=elastic.zip \
            -e EXIT_ON_EXISTING_INDICES=false \
            dataportal-es-init
