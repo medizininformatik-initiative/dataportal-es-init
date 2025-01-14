@@ -42,8 +42,10 @@ To use this Docker image, follow these steps:
 
 ## Environment Variables
 
-The Docker image supports several environment variables for configuration. The only variable that **must not** be omitted is `ONTO_GIT_TAG`, the others come with default values:
+The Docker image supports several environment variables for configuration. The only variables that **must not** be omitted are `MODE`  and `ONTO_GIT_TAG` if mode is download or `LOCAL_PATH` if mode is local, the others come with default values:
 
+- `MODE`: Can either be `mount` or `download`. When set to mount, `LOCAL_PATH` **must** be set, when set to download, `ONTO_GIT_TAG` **must** be set.
+- `LOCAL_PATH`: Path on the local filesystem where the needed archive can be found.
 - `ES_HOST`: The hostname or IP address of the Elasticsearch instance (default: `127.0.0.1`). Please note that the host must - for obvious reasons - be reachable from within this container. In case you are just using it for local purposes, set `--network host` in your docker run command or compose file and use 127.0.0.1 . In that case, the elasticsearch port 9200 must be mapped to the host machine as well.
 - `ES_PORT`: The port Elasticsearch is running on (default: `9200`).
 - `ONTO_GIT_TAG`: The tag of the [FHIR Ontology Generator](https://github.com/medizininformatik-initiative/fhir-ontology-generator) files to use.
@@ -55,16 +57,19 @@ The Docker image supports several environment variables for configuration. The o
 
 A minimal example to run would be the following. Please see the description of the `ES_HOST` variable in the section above regarding the `--network host` setting. Feel free to remove this if your elasticsearch instance is otherwise reachable from within this container.
 
+### Downloading from GitHub
+
 ```bash
 docker run --network host \
+           -e MODE=download \
            -e ONTO_GIT_TAG=v3.0.1 \
-           ghcr.io/medizininformatik-initiative/dataportal-es-init:feature-1-create-es-init-container
+           ghcr.io/medizininformatik-initiative/dataportal-es-init:latest
 ```
-
 which would be equivalent to
 
 ```bash
 docker run --network host \
+           -e MODE=download \
            -e ES_HOST=http://127.0.0.1 \
            -e ES_PORT=9200 \
            -e ONTO_GIT_TAG=v3.0.1 \
@@ -73,3 +78,15 @@ docker run --network host \
            -e EXIT_ON_EXISTING_INDICES=false \
            dataportal-es-init
 ```
+
+### Providing a local archive file via mount
+
+```bash
+docker run --network host \
+           -e MODE=mount \
+           -e LOCAL_PATH=/home/foobar/myarchive.zip \
+           ghcr.io/medizininformatik-initiative/dataportal-es-init:latest
+```
+
+
+

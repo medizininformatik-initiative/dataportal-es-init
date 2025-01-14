@@ -4,9 +4,13 @@ services:
     # Please see the README.md description of the ES_HOST parameter concerning the network_mode
     network_mode: host
     environment:
+      MODE: ${ELASTIC_INIT_MODE}
+      LOCAL_PATH: ${ELASTIC_INIT_LOCAL_PATH}
       ES_HOST: ${ELASTIC_INIT_ES_HOST}
       ES_PORT: ${ELASTIC_INIT_ES_PORT}
       ONTO_GIT_TAG: ${ELASTIC_INIT_ONTO_GIT_TAG}
       ONTO_REPO: ${ELASTIC_INIT_ONTO_REPO}
       DOWNLOAD_FILENAME: ${ELASTIC_INIT_DOWNLOAD_FILENAME}
       EXIT_ON_EXISTING_INDICES: ${ELASTIC_INIT_EXIT_ON_EXISTING_INDICES}
+    volumes:
+      - ${ELASTIC_INIT_LOCAL_PATH}:/tmp/mounted_onto.zip
