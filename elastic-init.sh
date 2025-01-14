@@ -3,6 +3,27 @@
 HOST="${ES_HOST:-http://127.0.0.1}:${ES_PORT:-9200}"
 REPO="${ONTO_REPO:-https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/download}"
 FILENAME="${DOWNLOAD_FILENAME:-elastic.zip}"
+MOUNTED_FILENAME=/tmp/mounted_onto.zip
+
+if [ -z "$MODE" ]; then
+  echo "Mode MUST be specified. Set to either local or download. There is no default value to be assumed here."
+  exit 1
+fi
+
+if [ "$MODE" = "mount" ]; then
+  if [ ! -f $MOUNTED_FILENAME ]; then
+    echo "In local mode, LOCAL_PATH MUST be provided and actually contain a zip file"
+    exit 1
+  fi
+elif [ "$MODE" = "download" ]; then
+    if [ -z "$ONTO_GIT_TAG" ]; then
+      echo "In download mode, ONTO_GIT_TAG MUST be provided"
+      exit 1
+    fi
+else
+    echo "Unknown mode. Must be either mount or download"
+    exit 1
+fi
 
 # Wait for Elasticsearch to start up before doing anything
 until curl -X GET "$HOST/_cluster/health" | grep -q '"status":"green"\|"status":"yellow"'; do
@@ -22,16 +43,21 @@ if [ "$EXIT_ON_EXISTING_INDICES" = "true" ]; then
   fi
 fi
 
-ABSOLUTE_FILEPATH="${REPO}/${ONTO_GIT_TAG}/${FILENAME}"
-echo "Downloading $ABSOLUTE_FILEPATH"
-response_onto_dl=$(curl --write-out "%{http_code}" -sLO "$ABSOLUTE_FILEPATH")
+if [ "$MODE" = "download" ]; then
+  ABSOLUTE_FILEPATH="${REPO}/${ONTO_GIT_TAG}/${FILENAME}"
+  echo "Downloading $ABSOLUTE_FILEPATH"
+  response_onto_dl=$(curl --write-out "%{http_code}" -sLO "$ABSOLUTE_FILEPATH")
 
-if [ "$response_onto_dl" -ne 200 ]; then
-  echo "Could not download ontology file. Maybe the tag $ONTO_GIT_TAG does not exist? Error code was $response_onto_dl"
-  exit 1
+  if [ "$response_onto_dl" -ne 200 ]; then
+    echo "Could not download ontology file. Maybe the tag $ONTO_GIT_TAG does not exist? Error code was $response_onto_dl"
+    exit 1
+  fi
+
+  unzip -o "$FILENAME"
+else
+  unzip -o "$MOUNTED_FILENAME"
 fi
 
-unzip -o "$FILENAME"
 
 echo "(Trying to) delete existing indices"
 curl --request DELETE "$HOST/ontology"
