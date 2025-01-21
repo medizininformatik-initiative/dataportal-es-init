@@ -23,7 +23,7 @@ To use this Docker image, follow these steps:
 
 2. **Build the Docker Image**:
    ```bash
-   docker build -t dataportal-es-init .
+   docker build -t dataportal-es-init:latest .
    ```
 
 3. **Run the Docker Container**:
@@ -37,7 +37,7 @@ To use this Docker image, follow these steps:
               -e ONTO_RELATIVE_PATH=<onto_relative_path> \
               -e DOWNLOAD_FILENAME=<download_filename> \
               -e EXIT_ON_EXISTING_INDICES=false \
-              dataportal-es-init
+              dataportal-es-init:latest
    ```
 
 ## Environment Variables
@@ -74,7 +74,7 @@ docker run --network host \
            -e ONTO_REPO=https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/download \
            -e DOWNLOAD_FILENAME=elastic.zip \
            -e EXIT_ON_EXISTING_INDICES=false \
-           dataportal-es-init
+           dataportal-es-init:latest
 ```
 
 ### Providing a local archive file via mount

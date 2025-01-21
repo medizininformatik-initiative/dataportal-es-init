@@ -6,6 +6,7 @@ FILENAME="${DOWNLOAD_FILENAME:-elastic.zip}"
 MOUNTED_FILENAME=/tmp/mounted_onto.zip
 MODE=download
 
+echo "Init container for elastic search - v 1.2.1"
 
 if [ -f $MOUNTED_FILENAME ]; then
   echo "Mounted file found. Not downloading anything but using the mounted file. If you want to download instead, remove the mounted volume and/or file."
