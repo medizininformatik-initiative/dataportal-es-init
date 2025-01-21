@@ -4,25 +4,18 @@ HOST="${ES_HOST:-http://127.0.0.1}:${ES_PORT:-9200}"
 REPO="${ONTO_REPO:-https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/download}"
 FILENAME="${DOWNLOAD_FILENAME:-elastic.zip}"
 MOUNTED_FILENAME=/tmp/mounted_onto.zip
+MODE=download
 
-if [ -z "$MODE" ]; then
-  echo "Mode MUST be specified. Set to either local or download. There is no default value to be assumed here."
-  exit 1
-fi
+echo "Init container for elastic search - v 1.2.1"
 
-if [ "$MODE" = "mount" ]; then
-  if [ ! -f $MOUNTED_FILENAME ]; then
-    echo "In local mode, LOCAL_PATH MUST be provided and actually contain a zip file"
+if [ -f $MOUNTED_FILENAME ]; then
+  echo "Mounted file found. Not downloading anything but using the mounted file. If you want to download instead, remove the mounted volume and/or file."
+  MODE=mount
+elif [ -z "$ONTO_GIT_TAG" ]; then
+    echo "No mounted file found and no ONTO_GIT_TAG provided. Exiting..."
     exit 1
-  fi
-elif [ "$MODE" = "download" ]; then
-    if [ -z "$ONTO_GIT_TAG" ]; then
-      echo "In download mode, ONTO_GIT_TAG MUST be provided"
-      exit 1
-    fi
 else
-    echo "Unknown mode. Must be either mount or download"
-    exit 1
+  echo "Downloading ${ONTO_GIT_TAG}"
 fi
 
 # Wait for Elasticsearch to start up before doing anything
@@ -36,7 +29,7 @@ if [ "$EXIT_ON_EXISTING_INDICES" = "true" ]; then
   status_code_ontology=$(curl -o /dev/null -s -w "%{http_code}" "$HOST/ontology")
   status_code_cc=$(curl -o /dev/null -s -w "%{http_code}" "$HOST/codeable_concept")
   if [ "$status_code_ontology" -ne 404 ] || [ "$status_code_cc" -ne 404 ]; then
-    echo "At least one index is existing, and the script is configured to quit in this case. See EXIT_ON_EXISTING_INDEX and FORCE_INDEX_CREATION if you want to override this."
+    echo "At least one index is existing, and the script is configured to quit in this case. Set EXIT_ON_EXISTING_INDEX to false if you want to override this."
     exit 0
   else
     echo "Neither ontology nor codeable_concept index exists. Download zip file and create indices."
