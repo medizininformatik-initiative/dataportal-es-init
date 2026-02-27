@@ -94,7 +94,9 @@ FILENAME="${DOWNLOAD_FILENAME:-elastic.zip}"
 MOUNTED_FILENAME=/tmp/mounted_onto.zip
 MODE=download
 
-echo "Init container for elastic search - v 1.2.1"
+echo "Init container for elastic search - v 2.0.0"
+
+CURRENT_VERSION=$(curl -s "$HOST/ontology" | jq -r '.ontology.mappings._meta.version')
 
 if [ -f $MOUNTED_FILENAME ]; then
   echo "Mounted file found. Not downloading anything but using the mounted file. If you want to download instead, remove the mounted volume and/or file."
@@ -103,6 +105,14 @@ elif [ -z "$ONTO_GIT_TAG" ]; then
     echo "No mounted file found and no ONTO_GIT_TAG provided. Exiting..."
     exit 1
 else
+  # When downloading, compare versions already to avoid unnecessary downloads
+  V1=$(normalize_version "$CURRENT_VERSION")
+  V2=$(normalize_version "$ONTO_GIT_TAG")
+  compare_versions "$V1" "$V2"
+  if [[ $? -gt 1 && "${FORCE_REINSTALL,,}" != "true" ]]; then
+    echo "Requested version ($ONTO_GIT_TAG) is not newer than the installed one ($CURRENT_VERSION). Set FORCE_REINSTALL to true to override."
+    exit 0
+  fi
   echo "Downloading ${ONTO_GIT_TAG}"
 fi
 
@@ -127,7 +137,7 @@ else
   unzip -o "$MOUNTED_FILENAME"
 fi
 
-if [[ -z "$FORCE_REINSTALL" || "${FORCE_REINSTALL,,}" != "true" ]]; then
+if [[ "$MODE" = "mount" && -z "$FORCE_REINSTALL" || "${FORCE_REINSTALL,,}" != "true" ]]; then
   # Compare the version of the installed ontology with the downloaded or provided one.
   # If the installed one is newer, exit here unless FORCE_REINSTALL is set to true. In that case ignore everything
   # version-related
@@ -145,9 +155,9 @@ if [[ -z "$FORCE_REINSTALL" || "${FORCE_REINSTALL,,}" != "true" ]]; then
       2) op='=';;
       3) op='>';;
   esac
-  echo "$CURRENT_VERSION $op $PROVIDED_VERSION"
+
   if [[ $comparison_result -gt 1 ]]; then
-    echo "The installed version is newer than the one you are trying to install. If you want to force a reinstall, set FORCE_REINSTALL to true. Exiting."
+    echo "Provided version ($PROVIDED_VERSION) is not newer than the installed one ($CURRENT_VERSION). Set FORCE_REINSTALL to true to override."
     exit 0
   fi
 else
