@@ -10,6 +10,7 @@ The primary purpose of this project is to automate the setup of the Elasticsearc
 
 - **Docker**: Ensure Docker is installed and running on your system.
 - **Elasticsearch**: A running instance of Elasticsearch to receive the index definitions and documents. The REST api of the elasticsearch instance must be reachable from within this container
+- Ontology version v4.0.0 or later. Previous versions don't provide their version number in the indices. If you need to run on older versions, please use version 1.x.x of THIS tool
 
 ## Usage
 
@@ -36,7 +37,7 @@ To use this Docker image, follow these steps:
               -e ONTO_REPO=<onto_repo> \
               -e ONTO_RELATIVE_PATH=<onto_relative_path> \
               -e DOWNLOAD_FILENAME=<download_filename> \
-              -e EXIT_ON_EXISTING_INDICES=false \
+              -e FORCE_REINSTALL=false \
               dataportal-es-init:latest
    ```
 
@@ -49,7 +50,7 @@ The Docker image supports several environment variables for configuration. The o
 - `ONTO_GIT_TAG`: The tag of the [FHIR Ontology Generator](https://github.com/medizininformatik-initiative/fhir-ontology-generator) files to use.
 - `ONTO_REPO`: Base URL to the ontology generator repository (default: `https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/download`). Please do **NOT** enter a trailing slash since it will be inserted in the script.
 - `DOWNLOAD_FILENAME`: The filename to get (default: `elastic.zip`)
-- `EXIT_ON_EXISTING_INDEX`: If set to true, the container will shut down without doing anything if at least one of both indices (`ontology` and `codeable_concept`) exists (default: false)
+- `FORCE_REINSTALL`: If set to true, both indices in the elasticsearch container will be deleted and freshly created from the files in the downloaded (or provided) zip file.
 
 ## Examples
 
@@ -61,7 +62,7 @@ This is the default setting. Provide the git tag of the ontology you want to dow
 
 ```bash
 docker run --network host \
-           -e ONTO_GIT_TAG=v3.0.1 \
+           -e ONTO_GIT_TAG=v4.0.0 \
            ghcr.io/medizininformatik-initiative/dataportal-es-init:latest
 ```
 which would be equivalent to
@@ -70,16 +71,17 @@ which would be equivalent to
 docker run --network host \
            -e ES_HOST=http://127.0.0.1 \
            -e ES_PORT=9200 \
-           -e ONTO_GIT_TAG=v3.0.1 \
+           -e ONTO_GIT_TAG=v4.0.0 \
            -e ONTO_REPO=https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/download \
            -e DOWNLOAD_FILENAME=elastic.zip \
-           -e EXIT_ON_EXISTING_INDICES=false \
+           -e FORCE_REINSTALL=false \
            dataportal-es-init:latest
 ```
 
 ### Providing a local archive file via mount
 
-In case you want to use a local file on your machine instead of downloading from GitHub (or elsewhere), you must mount a valid zip file to `/tmp/mounted_onto.zip` in the container
+In case you want to use a local file on your machine instead of downloading from GitHub (or elsewhere), you must mount a valid zip file to `/tmp/mounted_onto.zip` in the container. This filename is fixed.
+**Important since v2**: Make sure that your locally provided file also contains the version information in the _meta part of the indices. Or set `FORCE_REINSTALL` to true to always delete and reinstall the indices.
 
 ```bash
 docker run --network host \
