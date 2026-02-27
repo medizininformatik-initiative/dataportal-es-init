@@ -1,4 +1,4 @@
-FROM curlimages/curl:8.13.0@sha256:d43bdb28bae0be0998f3be83199bfb2b81e0a30b034b6d7586ce7e05de34c3fd
+FROM curlimages/curl:8.18.0@sha256:d94d07ba9e7d6de898b6d96c1a072f6f8266c687af78a74f380087a0addf5d17
 
 WORKDIR /home/curl_user
 COPY ./elastic-init.sh elastic-init.sh
