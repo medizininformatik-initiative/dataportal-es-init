@@ -88,6 +88,10 @@ normalize_version() {
   echo "$1" | sed 's/^v//'
 }
 
+# ANSI color codes
+GREEN="\033[0;32m"
+RED="\033[0;31m"
+NC="\033[0m"
 HOST="${ES_HOST:-http://127.0.0.1}:${ES_PORT:-9200}"
 REPO="${ONTO_REPO:-https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/download}"
 FILENAME="${DOWNLOAD_FILENAME:-elastic.zip}"
@@ -177,19 +181,32 @@ echo "${response_cc}"
 echo "Done"
 
 for FILE in elastic/*; do
-  if [ -f "$FILE" ]; then
+    [[ -f "$FILE" ]] || continue
     BASENAME=$(basename "$FILE")
-    if [[ $BASENAME == onto_es__ontology* && $BASENAME == *.json ]]; then
-      echo "Uploading $BASENAME"
-      response_upload=$(curl --write-out "%{http_code}" -s --output /dev/null -XPOST -H 'Content-Type: application/json' --data-binary @"$FILE" "$HOST/ontology/_bulk")
-      echo "${response_upload}"
+
+    # Only process JSON files starting with onto_es__
+    if [[ "$BASENAME" == onto_es__*.json ]]; then
+        # Extract endpoint: remove prefix and strip version/extension
+        NAME="${BASENAME#onto_es__}"
+        INDEX_PATH="${NAME%_*_*}"
+        INDEX_PATH="${INDEX_PATH%.json}"
+
+        echo -n "Uploading $BASENAME -> "
+
+        # Perform upload
+        response_upload=$(curl --write-out "%{http_code}" -s --output /dev/null \
+                              -XPOST -H 'Content-Type: application/json' \
+                              --data-binary @"$FILE" "$HOST/$INDEX_PATH/_bulk")
+
+        # Color-code HTTP status
+        if [[ "$response_upload" =~ ^2 ]]; then
+            color=$GREEN
+        else
+            color=$RED
+        fi
+
+        echo -e "${color}${response_upload}${NC}"
     fi
-    if [[ $BASENAME == onto_es__codeable_concept* && $BASENAME == *.json ]]; then
-      echo "Uploading $BASENAME"
-      response_upload=$(curl --write-out "%{http_code}" -s --output /dev/null -XPOST -H 'Content-Type: application/json' --data-binary @"$FILE" "$HOST/codeable_concept/_bulk")
-      echo "${response_upload}"
-    fi
-  fi
 done
 
 echo "All done"
