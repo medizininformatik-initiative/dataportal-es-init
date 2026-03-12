@@ -8,4 +8,6 @@ COPY ./elastic-init.sh elastic-init.sh
 
 RUN chmod +x elastic-init.sh
 
+USER 10001
+
 ENTRYPOINT ["bash", "/home/curl_user/elastic-init.sh"]
