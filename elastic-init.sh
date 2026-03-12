@@ -98,7 +98,7 @@ FILENAME="${DOWNLOAD_FILENAME:-elastic.zip}"
 MOUNTED_FILENAME=/tmp/mounted_onto.zip
 MODE=download
 
-echo "Init container for elastic search - v 2.0.0"
+echo "Init container for elastic search - v 2.0.1"
 
 CURRENT_VERSION=$(curl -s "$HOST/ontology" | jq -r '.ontology.mappings._meta.version')
 
