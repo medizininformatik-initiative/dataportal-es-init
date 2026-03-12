@@ -3,11 +3,11 @@ FROM curlimages/curl:8.18.0@sha256:d94d07ba9e7d6de898b6d96c1a072f6f8266c687af78a
 USER root
 RUN apk add --no-cache bash jq
 
-USER 10001
-
 WORKDIR /home/curl_user
 COPY ./elastic-init.sh elastic-init.sh
 
 RUN chmod +x elastic-init.sh
+
+USER 10001
 
 ENTRYPOINT ["bash", "/home/curl_user/elastic-init.sh"]
