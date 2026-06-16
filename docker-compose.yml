@@ -3,6 +3,7 @@ services:
     image: ghcr.io/medizininformatik-initiative/dataportal-es-init:latest
     # Please see the README.md description of the ES_HOST parameter concerning the network_mode
     network_mode: host
+    working_dir: /tmp
     environment:
       ES_HOST: ${ELASTIC_INIT_ES_HOST}
       ES_PORT: ${ELASTIC_INIT_ES_PORT}
