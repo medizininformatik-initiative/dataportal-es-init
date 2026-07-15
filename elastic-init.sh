@@ -208,11 +208,11 @@ for FILE in "$CONTENT_DIR"/*; do
     [[ -f "$FILE" ]] || continue
     BASENAME=$(basename "$FILE")
 
-    # Only process JSON files starting with onto_es__
-    if [[ "$BASENAME" == onto_es__*.ndjson ]]; then
-        # Extract endpoint: remove prefix and strip trailing numeric segments (e.g. _1, _1_0, _9_38)
+    # Only process JSON/NDJSON files starting with onto_es__
+    if [[ "$BASENAME" == onto_es__*.json || "$BASENAME" == onto_es__*.ndjson ]]; then
+        # Extract endpoint: remove prefix and strip extension and trailing numeric segments (e.g. _1, _1_0, _9_38)
         NAME="${BASENAME#onto_es__}"
-        INDEX_PATH="${NAME%.ndjson}"
+        INDEX_PATH="${NAME%.*}"
         while [[ "$INDEX_PATH" =~ ^(.+)_[0-9]+$ ]]; do
             INDEX_PATH="${BASH_REMATCH[1]}"
         done
