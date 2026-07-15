@@ -97,6 +97,9 @@ REPO="${ONTO_REPO:-https://github.com/medizininformatik-initiative/fhir-ontology
 FILENAME="${DOWNLOAD_FILENAME:-elastic.zip}"
 MOUNTED_FILENAME=/tmp/mounted_onto.zip
 MODE=download
+INDEX_DIR=elastic/index
+PIPELINE_DIR=elastic/pipeline
+CONTENT_DIR=elastic/content
 
 echo "Init container for elastic search - v 2.0.2"
 
@@ -148,7 +151,7 @@ if [[ "$MODE" = "mount" && -z "$FORCE_REINSTALL" || "${FORCE_REINSTALL,,}" != "t
   # There should never be a case where the version of ontology and codeable_concept indices differ. So only ontology is
   # checked here. Maybe there will be an edge case some day that is not covered here.
   CURRENT_VERSION=$(curl -s "$HOST/ontology" | jq -r '.ontology.mappings._meta.version')
-  PROVIDED_VERSION=$(< elastic/ontology_index.json jq -r '.mappings._meta.version')
+  PROVIDED_VERSION=$(< "$INDEX_DIR/ontology_index.json" jq -r '.mappings._meta.version')
   V1=$(normalize_version "$CURRENT_VERSION")
   V2=$(normalize_version "$PROVIDED_VERSION")
 
@@ -169,29 +172,52 @@ else
 fi
 
 echo "(Trying to) delete existing indices"
-curl --request DELETE "$HOST/ontology"
-curl --request DELETE "$HOST/codeable_concept"
+for FILE in "$INDEX_DIR"/*.json; do
+    [[ -f "$FILE" ]] || continue
+    INDEX_NAME=$(basename "$FILE" .json)
+    INDEX_NAME="${INDEX_NAME%_index}"
+    curl --request DELETE "$HOST/$INDEX_NAME"
+done
 
-echo "Creating ontology index..."
-response_onto=$(curl --write-out "%{http_code}" -s --output /dev/null -XPUT -H 'Content-Type: application/json' "$HOST/ontology" -d @elastic/ontology_index.json)
-echo "${response_onto}"
-echo "Creating codeable concept index..."
-response_cc=$(curl --write-out "%{http_code}" -s --output /dev/null -XPUT -H 'Content-Type: application/json' "$HOST/codeable_concept" -d @elastic/codeable_concept_index.json)
-echo "${response_cc}"
+echo "Creating pipelines..."
+for FILE in "$PIPELINE_DIR"/*.json; do
+    [[ -f "$FILE" ]] || continue
+    PIPELINE_NAME=$(basename "$FILE" .json)
+    echo -n "Creating pipeline $PIPELINE_NAME -> "
+    response_pipeline=$(curl --write-out "%{http_code}" -s --output /dev/null -XPUT -H 'Content-Type: application/json' "$HOST/_ingest/pipeline/$PIPELINE_NAME" -d @"$FILE")
+    if [[ "$response_pipeline" =~ ^2 ]]; then
+        color=$GREEN
+    else
+        color=$RED
+    fi
+    echo -e "${color}${response_pipeline}${NC}"
+done
 echo "Done"
 
-for FILE in elastic/*; do
+for FILE in "$INDEX_DIR"/*.json; do
+    [[ -f "$FILE" ]] || continue
+    INDEX_NAME=$(basename "$FILE" .json)
+    INDEX_NAME="${INDEX_NAME%_index}"
+    echo "Creating $INDEX_NAME index..."
+    response_index=$(curl --write-out "%{http_code}" -s --output /dev/null -XPUT -H 'Content-Type: application/json' "$HOST/$INDEX_NAME" -d @"$FILE")
+    echo "${response_index}"
+done
+echo "Done"
+
+for FILE in "$CONTENT_DIR"/*; do
     [[ -f "$FILE" ]] || continue
     BASENAME=$(basename "$FILE")
 
-    # Only process JSON files starting with onto_es__
-    if [[ "$BASENAME" == onto_es__*.json ]]; then
-        # Extract endpoint: remove prefix and strip version/extension
+    # Only process JSON/NDJSON files starting with onto_es__
+    if [[ "$BASENAME" == onto_es__*.json || "$BASENAME" == onto_es__*.ndjson ]]; then
+        # Extract endpoint: remove prefix and strip extension and trailing numeric segments (e.g. _1, _1_0, _9_38)
         NAME="${BASENAME#onto_es__}"
-        INDEX_PATH="${NAME%_*_*}"
-        INDEX_PATH="${INDEX_PATH%.json}"
+        INDEX_PATH="${NAME%.*}"
+        while [[ "$INDEX_PATH" =~ ^(.+)_[0-9]+$ ]]; do
+            INDEX_PATH="${BASH_REMATCH[1]}"
+        done
 
-        echo -n "Uploading $BASENAME -> "
+        echo -n "Uploading $BASENAME to $INDEX_PATH -> "
 
         # Perform upload
         response_upload=$(curl --write-out "%{http_code}" -s --output /dev/null \
