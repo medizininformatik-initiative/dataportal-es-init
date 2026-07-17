@@ -97,9 +97,7 @@ REPO="${ONTO_REPO:-https://github.com/medizininformatik-initiative/fhir-ontology
 FILENAME="${DOWNLOAD_FILENAME:-elastic.zip}"
 MOUNTED_FILENAME=/work/mounted_onto.zip
 MODE=download
-INDEX_DIR=elastic/index
-PIPELINE_DIR=elastic/pipeline
-CONTENT_DIR=elastic/content
+EXTRACT_DIR=elastic
 
 echo "Init container for elastic search - v 3.0.1"
 
@@ -144,6 +142,27 @@ else
   unzip -o "$MOUNTED_FILENAME"
 fi
 
+if [ $? -ne 0 ]; then
+  echo "Could not extract archive. It may be corrupt or not a valid zip file."
+  exit 1
+fi
+
+# Since v3.0.0, archives are laid out with index/content/pipeline subdirectories.
+# Older archives are flat: index definition files
+# (named *_index.json) and content files sit side by side in $EXTRACT_DIR, and
+# there are no pipelines. Detect which layout we got and set the dirs accordingly.
+if [ -d "$EXTRACT_DIR/index" ]; then
+  echo "Detected archive layout with index/content/pipeline subdirectories."
+  INDEX_DIR="$EXTRACT_DIR/index"
+  CONTENT_DIR="$EXTRACT_DIR/content"
+  PIPELINE_DIR="$EXTRACT_DIR/pipeline"
+else
+  echo "Detected legacy flat archive layout. Using $EXTRACT_DIR directly; no pipelines in this layout."
+  INDEX_DIR="$EXTRACT_DIR"
+  CONTENT_DIR="$EXTRACT_DIR"
+  PIPELINE_DIR=""
+fi
+
 if [[ "$MODE" = "mount" && -z "$FORCE_REINSTALL" || "${FORCE_REINSTALL,,}" != "true" ]]; then
   # Compare the version of the installed ontology with the downloaded or provided one.
   # If the installed one is newer, exit here unless FORCE_REINSTALL is set to true. In that case ignore everything
@@ -172,7 +191,7 @@ else
 fi
 
 echo "(Trying to) delete existing indices"
-for FILE in "$INDEX_DIR"/*.json; do
+for FILE in "$INDEX_DIR"/*_index.json; do
     [[ -f "$FILE" ]] || continue
     INDEX_NAME=$(basename "$FILE" .json)
     INDEX_NAME="${INDEX_NAME%_index}"
@@ -180,21 +199,25 @@ for FILE in "$INDEX_DIR"/*.json; do
 done
 
 echo "Creating pipelines..."
-for FILE in "$PIPELINE_DIR"/*.json; do
-    [[ -f "$FILE" ]] || continue
-    PIPELINE_NAME=$(basename "$FILE" .json)
-    echo -n "Creating pipeline $PIPELINE_NAME -> "
-    response_pipeline=$(curl --write-out "%{http_code}" -s --output /dev/null -XPUT -H 'Content-Type: application/json' "$HOST/_ingest/pipeline/$PIPELINE_NAME" -d @"$FILE")
-    if [[ "$response_pipeline" =~ ^2 ]]; then
-        color=$GREEN
-    else
-        color=$RED
-    fi
-    echo -e "${color}${response_pipeline}${NC}"
-done
+if [ -n "$PIPELINE_DIR" ] && [ -d "$PIPELINE_DIR" ]; then
+  for FILE in "$PIPELINE_DIR"/*.json; do
+      [[ -f "$FILE" ]] || continue
+      PIPELINE_NAME=$(basename "$FILE" .json)
+      echo -n "Creating pipeline $PIPELINE_NAME -> "
+      response_pipeline=$(curl --write-out "%{http_code}" -s --output /dev/null -XPUT -H 'Content-Type: application/json' "$HOST/_ingest/pipeline/$PIPELINE_NAME" -d @"$FILE")
+      if [[ "$response_pipeline" =~ ^2 ]]; then
+          color=$GREEN
+      else
+          color=$RED
+      fi
+      echo -e "${color}${response_pipeline}${NC}"
+  done
+else
+  echo "No pipeline directory present, skipping."
+fi
 echo "Done"
 
-for FILE in "$INDEX_DIR"/*.json; do
+for FILE in "$INDEX_DIR"/*_index.json; do
     [[ -f "$FILE" ]] || continue
     INDEX_NAME=$(basename "$FILE" .json)
     INDEX_NAME="${INDEX_NAME%_index}"
