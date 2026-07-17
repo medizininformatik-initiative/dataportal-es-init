@@ -95,10 +95,10 @@ NC="\033[0m"
 HOST="${ES_HOST:-http://127.0.0.1}:${ES_PORT:-9200}"
 REPO="${ONTO_REPO:-https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/download}"
 FILENAME="${DOWNLOAD_FILENAME:-elastic.zip}"
-MOUNTED_FILENAME=/tmp/mounted_onto.zip
+MOUNTED_FILENAME=/work/mounted_onto.zip
 MODE=download
 
-echo "Init container for elastic search - v 2.0.2"
+echo "Init container for elastic search - v 2.0.3"
 
 CURRENT_VERSION=$(curl -s "$HOST/ontology" | jq -r '.ontology.mappings._meta.version')
 
