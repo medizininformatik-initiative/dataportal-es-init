@@ -80,12 +80,12 @@ docker run --network host \
 
 ### Providing a local archive file via mount
 
-In case you want to use a local file on your machine instead of downloading from GitHub (or elsewhere), you must mount a valid zip file to `/tmp/mounted_onto.zip` in the container. This filename is fixed.
+In case you want to use a local file on your machine instead of downloading from GitHub (or elsewhere), you must mount a valid zip file to `/work/mounted_onto.zip` in the container. This filename is fixed.
 **Important since v2**: Make sure that your locally provided file also contains the version information in the _meta part of the indices. Or set `FORCE_REINSTALL` to true to always delete and reinstall the indices.
 
 ```bash
 docker run --network host \
-           --mount type=bind,src=/home/foo/my-ontology.zip,dst=/tmp/mounted_onto.zip,ro \
+           --mount type=bind,src=/home/foo/my-ontology.zip,dst=/work/mounted_onto.zip,ro \
            ghcr.io/medizininformatik-initiative/dataportal-es-init:latest
 ```
 
@@ -97,7 +97,7 @@ e.g.
     volumes:
       - type: bind
         source: /home/foo/my-ontology.zip
-        target: /tmp/mounted_onto.zip
+        target: /work/mounted_onto.zip
         read_only: true
 ```
 
