@@ -1,4 +1,4 @@
-# FHIR Ontology Generator Docker Image
+# Elasticsearch Initialization
 
 This project provides a Docker image designed to download and deploy the elastic search files generated in the [FHIR Ontology Generator](https://github.com/medizininformatik-initiative/fhir-ontology-generator).
 
