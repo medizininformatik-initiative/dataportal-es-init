@@ -99,7 +99,7 @@ MOUNTED_FILENAME=/work/mounted_onto.zip
 MODE=download
 EXTRACT_DIR=elastic
 
-echo "Init container for elastic search - v 3.0.1"
+echo "Init container for elastic search - v 3.0.2"
 
 CURRENT_VERSION=$(curl -s "$HOST/ontology" | jq -r '.ontology.mappings._meta.version')
 
@@ -195,7 +195,14 @@ for FILE in "$INDEX_DIR"/*_index.json; do
     [[ -f "$FILE" ]] || continue
     INDEX_NAME=$(basename "$FILE" .json)
     INDEX_NAME="${INDEX_NAME%_index}"
-    curl --request DELETE "$HOST/$INDEX_NAME"
+    echo -n "Deleting $INDEX_NAME index -> "
+    response_delete=$(curl --request DELETE --write-out "%{http_code}" -s --output /dev/null "$HOST/$INDEX_NAME")
+    if [[ "$response_delete" =~ ^2 ]]; then
+        color=$GREEN
+    else
+        color=$RED
+    fi
+    echo -e "${color}${response_delete}${NC}"
 done
 
 echo "Creating pipelines..."
@@ -221,9 +228,14 @@ for FILE in "$INDEX_DIR"/*_index.json; do
     [[ -f "$FILE" ]] || continue
     INDEX_NAME=$(basename "$FILE" .json)
     INDEX_NAME="${INDEX_NAME%_index}"
-    echo "Creating $INDEX_NAME index..."
+    echo -n "Creating $INDEX_NAME index -> "
     response_index=$(curl --write-out "%{http_code}" -s --output /dev/null -XPUT -H 'Content-Type: application/json' "$HOST/$INDEX_NAME" -d @"$FILE")
-    echo "${response_index}"
+    if [[ "$response_index" =~ ^2 ]]; then
+        color=$GREEN
+    else
+        color=$RED
+    fi
+    echo -e "${color}${response_index}${NC}"
 done
 echo "Done"
 
