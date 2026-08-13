@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Elasticsearch Ontology Init</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+    fieldset { margin-bottom: 1rem; }
+    label { display: block; margin-top: 0.5rem; }
+    input[type=text], input[type=number] { width: 100%; box-sizing: border-box; padding: 0.3rem; }
+    pre#log { background: #111; color: #ddd; padding: 1rem; height: 320px; overflow-y: auto; white-space: pre-wrap; }
+    .hidden { display: none; }
+    button { padding: 0.5rem 1.2rem; margin-top: 0.5rem; }
+    legend { font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Elasticsearch Ontology Init</h1>
+  <p>This runs <code>elastic-init.sh</code> directly &mdash; no Docker container required.</p>
+
+  <form id="init-form">
+    <fieldset>
+      <legend>Elasticsearch target</legend>
+      <label>Host <input type="text" name="es_host" value="{{ defaults.es_host }}"></label>
+      <label>Port <input type="text" name="es_port" value="{{ defaults.es_port }}"></label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Source</legend>
+      <label><input type="radio" name="mode" value="download" checked> Download from repo</label>
+      <label><input type="radio" name="mode" value="upload"> Upload zip file</label>
+
+      <div id="download-fields">
+        <label>Ontology repo <input type="text" name="onto_repo" value="{{ defaults.onto_repo }}"></label>
+        <label>Git tag <input type="text" name="onto_git_tag" value="{{ defaults.onto_git_tag }}" placeholder="v4.0.0"></label>
+        <label>Download filename <input type="text" name="download_filename" value="{{ defaults.download_filename }}"></label>
+      </div>
+
+      <div id="upload-fields" class="hidden">
+        <label>Zip file <input type="file" name="zip_file" accept=".zip"></label>
+      </div>
+    </fieldset>
+
+    <label>
+      <input type="checkbox" name="force_reinstall" {% if defaults.force_reinstall|lower == 'true' %}checked{% endif %}>
+      Force reinstall (delete &amp; recreate indices even if not newer)
+    </label>
+
+    <button type="submit">Run</button>
+  </form>
+
+  <h2>Log</h2>
+  <pre id="log">(idle)</pre>
+
+  <script>
+    const form = document.getElementById('init-form');
+    const log = document.getElementById('log');
+    const downloadFields = document.getElementById('download-fields');
+    const uploadFields = document.getElementById('upload-fields');
+
+    document.querySelectorAll('input[name=mode]').forEach((radio) => {
+      radio.addEventListener('change', () => {
+        const isUpload = form.mode.value === 'upload';
+        downloadFields.classList.toggle('hidden', isUpload);
+        uploadFields.classList.toggle('hidden', !isUpload);
+      });
+    });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      log.textContent = '';
+      const submitBtn = form.querySelector('button');
+      submitBtn.disabled = true;
+
+      try {
+        const response = await fetch('/run', { method: 'POST', body: new FormData(form) });
+        if (!response.body) {
+          log.textContent = await response.text();
+          return;
+        }
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        for (;;) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          log.textContent += decoder.decode(value, { stream: true });
+          log.scrollTop = log.scrollHeight;
+        }
+      } catch (err) {
+        log.textContent += '\n[client error] ' + err;
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

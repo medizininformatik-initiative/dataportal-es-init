@@ -41,6 +41,43 @@ To use this Docker image, follow these steps:
               dataportal-es-init:latest
    ```
 
+## Running the script directly (no Docker)
+
+`elastic-init.sh` doesn't actually need the container — it just needs
+`bash`, `curl`, `jq` and `unzip` on `PATH`, and the same environment
+variables the Docker image sets. Run it from a scratch working directory
+(it downloads/extracts into the current directory):
+
+```bash
+mkdir -p /tmp/es-init-run && cd /tmp/es-init-run
+
+ES_HOST=http://127.0.0.1 \
+ES_PORT=9200 \
+ONTO_GIT_TAG=v4.0.0 \
+bash /path/to/dataportal-es-init/elastic-init.sh
+```
+
+To use a local zip file instead of downloading one, point
+`MOUNTED_FILENAME_OVERRIDE` at it (this is what the web UI's upload mode
+does under the hood) instead of setting `ONTO_GIT_TAG`:
+
+```bash
+ES_HOST=http://127.0.0.1 \
+ES_PORT=9200 \
+MOUNTED_FILENAME_OVERRIDE=/home/foo/my-ontology.zip \
+bash /path/to/dataportal-es-init/elastic-init.sh
+```
+
+Add `FORCE_REINSTALL=true` to either command to skip the version check and
+always delete/recreate the indices.
+
+## Web UI (alternative to Docker)
+
+For local/manual use, there's also a tiny Flask web UI that runs
+`elastic-init.sh` directly — no Docker build required — and lets you either
+provide a git tag to download or upload a zip archive directly from the
+browser. See [`webapp/README.md`](webapp/README.md) for setup and usage.
+
 ## Environment Variables
 
 The Docker image supports several environment variables for configuration. The only variables that **must not** be omitted are `MODE`  and `ONTO_GIT_TAG` if mode is download or `LOCAL_PATH` if mode is local, the others come with default values:
