@@ -119,7 +119,7 @@ MODE=download
 EXTRACT_DIR=elastic
 UPLOAD_PARALLELISM="${UPLOAD_PARALLELISM:-8}"
 
-echo "Init container for elastic search - v 3.0.2"
+echo "Init container for elastic search - v 3.1.0"
 
 CURRENT_VERSION=$(curl -s "$HOST/ontology" | jq -r '.ontology.mappings._meta.version')
 
