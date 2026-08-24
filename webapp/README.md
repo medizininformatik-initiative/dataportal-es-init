@@ -23,7 +23,8 @@ python app.py
 Then open http://127.0.0.1:5000.
 
 Form defaults are pre-filled from the same `ELASTIC_INIT_*` environment
-variables used by `docker-compose.yml` / `.env` (see the main README).
+variables used by `docker-compose.yml` / `.env` (see the main README),
+including `ELASTIC_INIT_UPLOAD_PARALLELISM`.
 
 ## Optional access control
 
