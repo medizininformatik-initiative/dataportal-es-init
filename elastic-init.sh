@@ -88,6 +88,25 @@ normalize_version() {
   echo "$1" | sed 's/^v//'
 }
 
+# Some archives wrap their payload in an extra, redundant top-level directory
+# (e.g. a zip created from an already-extracted "elastic" folder ends up as
+# elastic/elastic/index/... instead of elastic/index/...). Collapse any chain
+# of single-subdirectory wrappers so the layout detection below finds the
+# real payload regardless of how the archive was zipped.
+resolve_payload_dir() {
+  local dir="$1"
+  if [ -d "$dir/index" ] || compgen -G "$dir"/*_index.json > /dev/null 2>&1; then
+    echo "$dir"
+    return
+  fi
+  local subdirs=("$dir"/*/)
+  if [ ${#subdirs[@]} -eq 1 ] && [ -d "${subdirs[0]}" ]; then
+    resolve_payload_dir "${subdirs[0]%/}"
+    return
+  fi
+  echo "$dir"
+}
+
 # ANSI color codes
 GREEN="\033[0;32m"
 RED="\033[0;31m"
@@ -95,7 +114,7 @@ NC="\033[0m"
 HOST="${ES_HOST:-http://127.0.0.1}:${ES_PORT:-9200}"
 REPO="${ONTO_REPO:-https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/download}"
 FILENAME="${DOWNLOAD_FILENAME:-elastic.zip}"
-MOUNTED_FILENAME=/work/mounted_onto.zip
+MOUNTED_FILENAME="${MOUNTED_FILENAME_OVERRIDE:-/work/mounted_onto.zip}"
 MODE=download
 EXTRACT_DIR=elastic
 
@@ -145,6 +164,12 @@ fi
 if [ $? -ne 0 ]; then
   echo "Could not extract archive. It may be corrupt or not a valid zip file."
   exit 1
+fi
+
+RESOLVED_EXTRACT_DIR=$(resolve_payload_dir "$EXTRACT_DIR")
+if [ "$RESOLVED_EXTRACT_DIR" != "$EXTRACT_DIR" ]; then
+  echo "Archive payload found nested under $RESOLVED_EXTRACT_DIR, adjusting."
+  EXTRACT_DIR="$RESOLVED_EXTRACT_DIR"
 fi
 
 # Since v3.0.0, archives are laid out with index/content/pipeline subdirectories.
