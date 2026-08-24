@@ -11,6 +11,7 @@ services:
       ONTO_REPO: ${ELASTIC_INIT_ONTO_REPO}
       DOWNLOAD_FILENAME: ${ELASTIC_INIT_DOWNLOAD_FILENAME}
       FORCE_REINSTALL: ${ELASTIC_INIT_FORCE_REINSTALL}
+      UPLOAD_PARALLELISM: ${ELASTIC_INIT_UPLOAD_PARALLELISM}
 #    volumes:
 #      - type: bind
 #        source: /tmp/elastic.zip

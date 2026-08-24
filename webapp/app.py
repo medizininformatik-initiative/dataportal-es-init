@@ -25,6 +25,7 @@ DEFAULTS = {
     "onto_git_tag": os.environ.get("ELASTIC_INIT_ONTO_GIT_TAG", ""),
     "download_filename": os.environ.get("ELASTIC_INIT_DOWNLOAD_FILENAME", "elastic.zip"),
     "force_reinstall": os.environ.get("ELASTIC_INIT_FORCE_REINSTALL", "false"),
+    "upload_parallelism": os.environ.get("ELASTIC_INIT_UPLOAD_PARALLELISM", "8"),
 }
 
 
@@ -60,6 +61,9 @@ def run():
     onto_git_tag = request.form.get("onto_git_tag") or DEFAULTS["onto_git_tag"]
     download_filename = request.form.get("download_filename") or DEFAULTS["download_filename"]
     force_reinstall = "true" if request.form.get("force_reinstall") else "false"
+    upload_parallelism = request.form.get("upload_parallelism") or DEFAULTS["upload_parallelism"]
+    if not upload_parallelism.isdigit() or int(upload_parallelism) < 1:
+        return Response("Upload parallelism must be a positive integer.\n", status=400)
 
     workdir = Path(tempfile.mkdtemp(prefix="es-init-"))
 
@@ -71,6 +75,7 @@ def run():
             "ONTO_REPO": onto_repo,
             "DOWNLOAD_FILENAME": download_filename,
             "FORCE_REINSTALL": force_reinstall,
+            "UPLOAD_PARALLELISM": upload_parallelism,
         }
     )
 

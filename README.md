@@ -88,6 +88,7 @@ The Docker image supports several environment variables for configuration. The o
 - `ONTO_REPO`: Base URL to the ontology generator repository (default: `https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/download`). Please do **NOT** enter a trailing slash since it will be inserted in the script.
 - `DOWNLOAD_FILENAME`: The filename to get (default: `elastic.zip`)
 - `FORCE_REINSTALL`: If set to true, both indices in the elasticsearch container will be deleted and freshly created from the files in the downloaded (or provided) zip file.
+- `UPLOAD_PARALLELISM`: How many content files are bulk-uploaded to Elasticsearch concurrently (default: `8`). Benchmarked against a real ontology v5.0.0 dataset (~340 bulk files, ~1.9GB) on a single-node ES instance: sequential uploads took ~270s, 8 concurrent uploads took ~133s (~2x faster), while 16 concurrent uploads was slower than 8 (~192s) due to contention. Tune this to your Elasticsearch instance's capacity.
 
 ## Examples
 
